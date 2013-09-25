@@ -19,6 +19,7 @@
 #  
 #  
 require 'net/http'
+require 'json'
 # Error classes
 class RestApiCallerError < StandardError
   def initialize(msg='RestApiCallerError');super;end
@@ -39,23 +40,43 @@ end
 
 # Class to interact with remote rest API
 class RestApiCaller
-  # set URI as an instance variable, check that it's http or https
+
+  # Instance variable methods
+  attr_reader :token
+  # Set URI as an instance variable, check that it's http or https and initialize @caller
   def initialize(api_uri)
     @uri = URI(api_uri)
     unless @uri.scheme == 'http' || @uri.scheme == 'https'
       raise RestApiCallerError::InitializationError, \
       'Argument must be http or https URI'
+    else
+      @caller = Net::HTTP.start(@uri.host,@uri.port)
     end
   end
-  # authorize user, set key
+  # authorize user, set token
   def authorize(user,pass)
-  
+    @uri.path += 'auth'
+    @uri.query = "user=" + user + "&pass=" + pass
+    response = @caller.request_get(@uri)
+    raise RestApiCallerError::AuthorizationError unless response.code == '200'
+    @token = JSON.parse(response.body)["token"]
+    raise RestApiCallerError::AuthorizationError unless @token
   end
-  def delete
+  # delete kv pair
+  def delete(key)
   end
-  def get
+  # close connection
+  def finish
+    @caller.finish
   end
-  def baz
+  # get value for key
+  def get(key)
+  end
+  # list all known keys
+  def list
+  end
+  # create kv pair
+  def put(key,value)
   end
 #  rescue SocketError => err
 #    puts err.message

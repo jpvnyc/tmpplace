@@ -24,9 +24,16 @@ require 'test/unit'
 #class to interact with remote rest API
 class RestApiCallerTest < Test::Unit::TestCase
   def test_initialize
-    assert_raise(RestApiCallerError::InitializationError) {RestApiCaller.new('ftp://foo')}
+    assert_raise(RestApiCallerError::InitializationError) do
+      RestApiCaller.new('ftp://foo')
+    end
+    assert_raise(SocketError) do
+      RestApiCaller.new('http://foo')
+    end
   end
   def test_authorize
-    assert_raise(RestApiCallerError::AuthorizationError) {RestApiCaller.new('foo')}
+    caller = RestApiCaller.new('http://hiringapi.dev.voxel.net/v2/auth')
+    assert_raise(ArgumentError){caller.authorize}
+    assert_raise(RestApiCallerError::AuthorizationError){caller.authorize('test','test')}
   end
 end
